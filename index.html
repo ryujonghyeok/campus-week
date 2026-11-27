@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111422">
+  <title>대학생으로 일주일 살아남기</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #f5f5ff;
+      background: #111422;
+      --panel: #1b2032;
+      --line: #353d56;
+      --muted: #bec6dc;
+      --accent: #d7f887;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #262e47, transparent 36rem);
+    }
+
+    main {
+      width: min(100%, 40rem);
+      margin-inline: auto;
+      padding: clamp(1rem, 5vw, 2.5rem);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(1.7rem, 5vw, 2.5rem);
+      line-height: 1.22;
+      letter-spacing: -0.045em;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
+    h3 { font-size: 1.25rem; }
+
+    .panel {
+      padding: clamp(1rem, 4vw, 1.5rem);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      background: var(--panel);
+    }
+
+    #intro, #game { margin-top: 1.5rem; }
+    #intro p { color: var(--muted); line-height: 1.7; }
+    #intro p + p { margin-top: 0.5rem; }
+    #intro button { margin-top: 1.25rem; }
+
+    #ending {
+      --ending-color: #d7f887;
+      margin-bottom: 0.75rem;
+      border-color: var(--ending-color);
+      background: #252f23;
+    }
+
+    #ending[data-outcome="loss"] {
+      --ending-color: #ffb1b5;
+      background: #352431;
+    }
+
+    #ending-title {
+      color: var(--ending-color);
+      font-size: clamp(2rem, 7vw, 3rem);
+      line-height: 1.15;
+    }
+
+    #ending-name { margin-top: 0.3rem; font-size: 1.15rem; font-weight: 750; }
+
+    .week-label, .stat-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-weight: 700;
+    }
+
+    .week-label { color: var(--accent); }
+
+    .week-steps {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.35rem;
+      margin: 0.65rem 0 1.2rem;
+    }
+
+    .week-steps span {
+      height: 0.35rem;
+      border-radius: 1rem;
+      background: var(--line);
+    }
+
+    .week-steps .reached { background: var(--accent); }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .stat { --bar: #a6bcff; }
+    .stat:nth-child(2) { --bar: #85e8cd; }
+    .stat:nth-child(3) { --bar: #f6b5dc; }
+    .stat-value { color: var(--bar); font-variant-numeric: tabular-nums; }
+
+    progress {
+      appearance: none;
+      display: block;
+      width: 100%;
+      height: 0.5rem;
+      margin-top: 0.35rem;
+      overflow: hidden;
+      border: 0;
+      border-radius: 1rem;
+      background: var(--line);
+      accent-color: var(--bar);
+    }
+
+    progress::-webkit-progress-bar { background: var(--line); }
+    progress::-webkit-progress-value { background: var(--bar); border-radius: 1rem; }
+    progress::-moz-progress-bar { background: var(--bar); border-radius: 1rem; }
+
+    .day-panel { margin-top: 0.75rem; }
+    #weekday { margin-bottom: 0.3rem; color: var(--muted); font-weight: 700; }
+    #event { word-break: keep-all; overflow-wrap: anywhere; }
+
+    #choices, #result {
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    #day-heading[hidden] ~ #result { margin-top: 0; }
+
+    #selected-action { color: var(--muted); line-height: 1.5; }
+
+    .changes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.4rem;
+      margin: 0.15rem 0 0.3rem;
+    }
+
+    .changes div {
+      padding: 0.55rem 0.3rem;
+      border: 1px solid var(--line);
+      border-radius: 0.6rem;
+      text-align: center;
+    }
+
+    .changes dt { color: var(--muted); font-size: 0.85rem; }
+    .changes dd { margin: 0.15rem 0 0; font-weight: 800; }
+    .changes .gain { color: #b8f4b4; }
+    .changes .loss { color: #ffb1b5; }
+
+    button {
+      width: 100%;
+      min-height: 3rem;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #515d7d;
+      border-radius: 0.7rem;
+      color: inherit;
+      background: #303954;
+      font: inherit;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    button:hover { background: #3d496a; }
+    .primary { border-color: transparent; background: var(--accent); color: #202b0d; }
+    .primary:hover { background: #e4ffa6; }
+
+    :focus-visible {
+      outline: 2px solid #e4ffa6;
+      outline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="title" tabindex="-1">대학생으로 일주일 살아남기</h1>
+
+    <section id="intro" class="panel" aria-label="게임 방법">
+      <p>월요일부터 일요일까지 매일 두 행동 중 하나를 고르세요.</p>
+      <p>학업·체력·행복은 <span id="starting-score"></span>에서 시작합니다. 하나라도 0이 되면 그날 게임이 끝납니다.</p>
+      <button id="start" class="primary" type="button">시작</button>
+    </section>
+
+    <section id="game" aria-label="게임 진행" hidden>
+      <section id="ending" class="panel" aria-labelledby="ending-title" hidden>
+        <h2 id="ending-title" tabindex="-1"></h2>
+        <p id="ending-name"></p>
+      </section>
+      <div class="panel">
+        <div class="week-label"><span>진행도</span><span id="day-count"></span></div>
+        <div class="week-steps" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <label class="stat-label" for="study">학업 <span class="stat-value"></span></label>
+            <progress id="study" max="100"></progress>
+          </div>
+          <div class="stat">
+            <label class="stat-label" for="energy">체력 <span class="stat-value"></span></label>
+            <progress id="energy" max="100"></progress>
+          </div>
+          <div class="stat">
+            <label class="stat-label" for="happiness">행복 <span class="stat-value"></span></label>
+            <progress id="happiness" max="100"></progress>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel day-panel">
+        <div id="day-heading">
+          <p id="weekday"></p>
+          <h2 id="event" tabindex="-1"></h2>
+        </div>
+        <div id="choices">
+          <button type="button"></button>
+          <button type="button"></button>
+        </div>
+        <section id="result" aria-labelledby="result-title" hidden>
+          <h3 id="result-title" tabindex="-1"></h3>
+          <p id="selected-action"></p>
+          <dl class="changes" aria-label="반영된 변화량">
+            <div><dt>학업</dt><dd></dd></div>
+            <div><dt>체력</dt><dd></dd></div>
+            <div><dt>행복</dt><dd></dd></div>
+          </dl>
+          <button id="next-day" class="primary" type="button">다음 날</button>
+          <button id="restart" class="primary" type="button" hidden>다시 시작</button>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const csv = `요일,사건,선택A,학업A,체력A,행복A,선택B,학업B,체력B,행복B
+월요일,1교시와 늦잠,수업에 간다,15,-10,-5,늦잠을 잔다,-10,15,5
+화요일,팀플 초안과 친구 약속,팀플 초안을 쓴다,15,-10,-5,친구를 만난다,-10,-5,15
+수요일,동아리와 도서관,동아리에 간다,-5,-10,20,도서관에 간다,15,-5,-10
+목요일,마감과 수면,밤새 마무리한다,20,-25,-10,잠을 충분히 잔다,-10,20,5
+금요일,나들이와 예습,나들이를 간다,-10,-5,20,다음 주 예습을 한다,15,-10,-5
+토요일,운동과 몰아 공부,가볍게 운동한다,0,20,10,몰아서 공부한다,20,-15,-5
+일요일,주간 계획과 드라마,다음 주를 계획한다,10,-5,5,드라마를 본다,-5,5,15`;
+
+    const days = csv.split("\n").slice(1).map((row) => {
+      const [weekday, event, choiceA, studyA, energyA, happinessA,
+        choiceB, studyB, energyB, happinessB] = row.split(",");
+      return {
+        weekday,
+        event,
+        choices: [
+          { text: choiceA, changes: [studyA, energyA, happinessA].map(Number) },
+          { text: choiceB, changes: [studyB, energyB, happinessB].map(Number) }
+        ]
+      };
+    });
+
+    const intro = document.querySelector("#intro");
+    const game = document.querySelector("#game");
+    const endingPanel = document.querySelector("#ending");
+    const endingTitle = document.querySelector("#ending-title");
+    const endingName = document.querySelector("#ending-name");
+    const dayCount = document.querySelector("#day-count");
+    const weekSteps = document.querySelectorAll(".week-steps span");
+    const statValues = document.querySelectorAll(".stat-value");
+    const statBars = document.querySelectorAll(".stat progress");
+    const dayHeading = document.querySelector("#day-heading");
+    const weekday = document.querySelector("#weekday");
+    const eventTitle = document.querySelector("#event");
+    const choices = document.querySelector("#choices");
+    const choiceButtons = choices.querySelectorAll("button");
+    const result = document.querySelector("#result");
+    const resultTitle = document.querySelector("#result-title");
+    const selectedAction = document.querySelector("#selected-action");
+    const changeValues = result.querySelectorAll("dd");
+    const nextDay = document.querySelector("#next-day");
+    const restart = document.querySelector("#restart");
+
+    const startingScore = 30;
+    document.querySelector("#starting-score").textContent = startingScore;
+    let stage = "start";
+    let dayIndex = 0;
+    let stats = Array(statBars.length).fill(startingScore);
+
+    function showStats() {
+      stats.forEach((value, index) => {
+        statValues[index].textContent = value;
+        statBars[index].value = value;
+      });
+    }
+
+    function showDay() {
+      stage = "choice";
+      const day = days[dayIndex];
+      dayCount.textContent = `${dayIndex + 1} / ${days.length}`;
+      weekSteps.forEach((step, index) => {
+        step.classList.toggle("reached", index <= dayIndex);
+      });
+      showStats();
+      weekday.textContent = day.weekday;
+      eventTitle.textContent = day.event;
+      choiceButtons.forEach((button, index) => {
+        button.textContent = day.choices[index].text;
+      });
+      endingPanel.hidden = true;
+      dayHeading.hidden = false;
+      result.hidden = true;
+      choices.hidden = false;
+      eventTitle.focus();
+    }
+
+    function getEnding() {
+      if (stats.includes(0)) return { outcome: "loss", name: "재충전 필요" };
+      if (dayIndex < days.length - 1) return null;
+      const name = stats.every((value) => value >= 40) ? "균형 달인" : "아슬아슬 생존";
+      return { outcome: "win", name };
+    }
+
+    function choose(index) {
+      if (stage !== "choice") return;
+      stage = "result";
+
+      const choice = days[dayIndex].choices[index];
+      const previous = stats;
+      stats = previous.map((value, stat) => {
+        return Math.max(0, Math.min(100, value + choice.changes[stat]));
+      });
+
+      showStats();
+      const ending = getEnding();
+      resultTitle.textContent = ending ? "마지막 선택" : "선택 결과";
+      selectedAction.textContent = choice.text;
+      changeValues.forEach((element, stat) => {
+        const change = stats[stat] - previous[stat];
+        element.textContent = change > 0 ? `+${change}` : change;
+        element.classList.toggle("gain", change > 0);
+        element.classList.toggle("loss", change < 0);
+      });
+      choices.hidden = true;
+      nextDay.hidden = Boolean(ending);
+      restart.hidden = !ending;
+      result.hidden = false;
+
+      if (ending) {
+        stage = "ending";
+        endingPanel.dataset.outcome = ending.outcome;
+        endingTitle.textContent = ending.outcome === "loss" ? "게임 오버" : "클리어";
+        endingName.textContent = ending.name;
+        dayHeading.hidden = true;
+        endingPanel.hidden = false;
+        endingTitle.focus();
+      } else {
+        resultTitle.focus();
+      }
+    }
+
+    document.querySelector("#start").addEventListener("click", () => {
+      if (stage !== "start") return;
+      intro.hidden = true;
+      game.hidden = false;
+      showDay();
+    });
+
+    choiceButtons.forEach((button, index) => {
+      button.addEventListener("click", () => choose(index));
+    });
+
+    nextDay.addEventListener("click", () => {
+      if (stage !== "result") return;
+      dayIndex += 1;
+      showDay();
+    });
+
+    restart.addEventListener("click", () => {
+      if (stage !== "ending") return;
+      stage = "start";
+      dayIndex = 0;
+      stats.fill(startingScore);
+      result.hidden = true;
+      resultTitle.textContent = "";
+      selectedAction.textContent = "";
+      game.hidden = true;
+      intro.hidden = false;
+      document.querySelector("#title").focus();
+    });
+  </script>
+</body>
+</html>
